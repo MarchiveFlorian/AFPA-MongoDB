@@ -1,0 +1,143 @@
+//Create table
+use cinema
+
+//Create collection
+db.createCollection("films")
+
+// import du json pour remplir la collection
+
+
+//Q1 Afficher tous les titres de films de "Spielberg" et du genre "Aventure".
+db.films.find({ "director.last_name" : "Spielberg", "genre" : "Aventure" })
+
+//Q2 Afficher tous les titres des films parus en 2000.
+db.films.find({ year : 2000}, {title : true})
+
+//Q3 Afficher tous les titres des films du genre "Action". 
+db.films.find({ genre : 'Action'}, {title : true})
+
+//Q4 Afficher la liste de tous les "genres" de la collection sans doublon. 
+db.films.distinct('genre')
+
+En travaillant en mode console, vous allez stocker le résultat de cette 
+requête dans une variable JavaScript, puis vous allez interroger de façon 
+usuelle cette variable pour connaître le nombre de genres présents dans 
+cette collection.
+
+let genres = db.films.distinct('genre');
+genres.length;
+
+//Q5 Afficher les titres des films français et leur date de sortie.
+db.films.find({country : 'FR'}, {title : true, year: true})
+
+//Q6 Afficher  les titres des films et leur année de sortie dans lesquels "Uma 
+Thurman" a joué.
+db.films.find({'actors.last_name' : 'Thurman'}, {title : true, year: true})
+
+//Q7 Quel est le réalisateur du film "Memento"
+db.films.find({title : 'Memento'}, {director: true})
+
+//Q8 Afficher les noms et prénoms des acteurs qui ont joué dans "Apocalypse 
+Now". 
+db.films.find({title : 'Apocalypse Now'}, {'actors.last_name' : true, 'actors.first_name' : true})
+
+//Q9 Afficher les titres des films sorties entre 1968 et 1978 inclus.
+db.films.find({year : {$gte : 1968, $lte : 1978}}, {title : 1})
+
+//Q10 Afficher  les titres  ainsi  que  l'année  de  sortie des  films  sorties  avant 
+l'année 1968 comprise (la même question mais année 1968 non comprise).
+db.films.find({$or:[{year : 1968}, {year : {$lt : 1968}}]}, {title : 1, year : 1})
+
+//Q11 La même question que la précédente mais en triant la sortie par années 
+croissantes, par années décroissantes. Enfin, vous n'afficherez cette fois que 
+5 lignes.
+db.films.find({$or:[{year : 1968}, {year : {$lt : 1968}}]}, {title : 1, year : 1}).sort({year : -1}).limit(5)
+
+//Q12 Afficher  tous  les  titres  de  films  du  genre  "Action"  ou  "Aventure"  
+ordonnés par genre. 
+db.films.find({$or:[{'genre' : 'Action'}, {'genre' : 'Aventure'}]}, {title : 1, genre : 1, year:true}).sort({genre : 1})
+
+//Q13 Afficher tous les titres de film dont le réalisateur n'est pas "Tarentino".
+db.films.find({'director.last_name' : {$ne: 'Tarantino'}}, {title : 1})
+
+//Q14 Afficher le nombre de films par genre en utilisant ici l’agrégation et les 
+opérateurs $group (équivalent du Group By en SQL classique) et $sum 
+(équivalent du SUM en SQL classique). 
+Vous pourrez aussi utiliser l’interface proposée par MongoDB Compass 
+pour composer cette requête d’agrégation.
+db.films.aggregate([{$group: {_id: '$genre','nombre_par_genre': {$sum: 1}}}])
+
+//Q15 Compter le nombre de documents qui composent cette collection et 
+pour lesquels l’année de sortie du film est supérieure ou égale à l’année 
+2000. Vous pourrez vous intéresser à la fonction countDocuments().
+db.films.countDocuments({year : {$gte : 2000}})
+
+//Q16 Afficher le titre et l’année de sortie du films de la collection dont le 
+pitch contient la chaîne de caractères : "la guerre du Vietnam".
+db.films.find({summary : {$regex : /la guerre du Vietnam/i}}, {title : 1, year : 1 })
+
+//Q17 Afficher les titres et l’année de sortie des films de la collection dans 
+lesquels jouait l’acteur "Robert Redford".
+db.films.find({'actors.last_name' : 'Redford'}, {'actors.first_name' : 'Robert'}, {title : 1, year : 1})
+
+//Q18 Afficher uniquement les titres des films de la collection dont le champ 
+summary contient la chaîne de caractères "famille " . Vous pourrez utiliser 
+ici l’opérateur $regex
+db.films.find({summary : {$regex : /famille/i}}, {title : 1})
+
+//Q19 Modifier l'année de sortie du Film "La Guerre des étoiles" en 1978 au 
+lieu de 1977. 
+db.films.updateOne({title : /la guerre des étoiles/i}, {$set : {year : 1978}})
+
+//Q20 Écrire dans la console de MongoDB Compass un petit programme 
+JavaScript qui permet d’afficher la liste des titres de films dans lesquels 
+joue l’acteur "Clint Eastwood".
+
+let recordSet = db.films.find({'actors.last_name' : 'Eastwood', 'actors.first_name' : 'Clint'}, {title : 1})
+while(recordSet.hasNext()){
+let film = recordSet.next();
+print("-" + film.title);
+}
+
+//Q21 Écrire dans la console de MongoDB Compass une instruction utilisant 
+le curseur forEach() de MongoDB qui permet d’afficher tous les titres des 
+films du genre "Science-Fiction" avec un compteur de ligne.
+let i = 1;
+db.films.find().forEach(function(film){
+print(i + "- titre du film:" + film.title)
+i++})
+
+//Q22  Insérer  le  nouveau  Film  "Pixels"  sortie  en  salle  en  2005,  c'est  une  
+Comédie US réalisée par Chris Columbus.
+db.films.insertOne({title : 'Pixels', year: 2005, genre : 'Comédie US', 'director.last_name' : 'Columbus', 'director.first_name' : 'Chris'})
+
+//Q23 Ajouter l'actrice "Diane Keaton" née en 1946 au film "Le Parrain" (Vous 
+pourrez  explorer  une  solution  en  utilisant  l’opérateur  $push en  ligne  de  
+commande) Puis vous essayerez d'ajouter un acteur supplémentaire en utilisant 
+l'interface graphique proposée par Compass MongoDB.  
+Remarque  :  Il  n'y  a  pas  d'intégrité  des  données  avec  MongoDB,  ainsi  on  
+pourrait rajouter autant de fois que l'on souhaite l'actrice "Diane Keaton" Si  on  veut  avoir  un  contrôle  des  doublons  on  peut  utiliser  l’opérateur 
+$addToSet à la place de $push.
+
+db.films.updateOne({title : /le parrain/i}, {$push : {actors : {'last_name' : 'Keaton', 'first_name' : 'Diane', 'birth_date': 1946}}})
+
+//Q24 Ajouter en une seule fois les 2 acteurs  "John Cazale"  né en 1935 et 
+"Richard  Conte"  né  en  1910  au  film  "Le  Parrain".  Pour  cela  vous  devrez  
+utiliser l’opérateur $each en ligne de commande.
+*
+db.films.updateOne({title : /le parrain/i}, {$push : {actors : {$each : [
+{'last_name' : 'Cazale', 'first_name' : 'John', 'birth_date': 1935},
+{'last_name' : 'Conte', 'first_name' : 'Richard', 'birth_date' : 1910}]}}})
+
+//Q25 Supprimer le film "Impitoyable" de la collection.
+db.films.deleteOne({title : 'Impitoyable'})
+
+//Q26 Supprimer tous les films de l'année 1970
+db.films.deleteMany({year : 1970})
+
+//Q27 Modifier le libellé des  films du genre "Science  Fiction"  par  "Science-
+Fiction".
+db.films.updateMany({genre : 'Science Fiction'}, {$set : {genre : 'Science-Fiction' }})
+
+//Q28 Faire  un  dump  de  la  base  de  données  (fichier  JSON)  en  utilisant  
+MongoDB Compass, puis en utilisant la ligne de commande.
